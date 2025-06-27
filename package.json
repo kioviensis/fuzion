@@ -24,7 +24,7 @@
     "@typescript-eslint/parser": "6.21.0",
     "eslint-config-react-app": "6.0.0",
     "monoreact": "0.35.0",
-    "prettier": "3.3.3",
+    "prettier": "3.6.2",
     "tslib": "2.6.2",
     "typescript": "5.6.3"
   }
