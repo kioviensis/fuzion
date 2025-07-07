@@ -12,8 +12,10 @@
     "start": "monoreact watch",
     "build": "monoreact build",
     "test": "monoreact test --passWithNoTests",
+    "test:perf": "yarn build && node --expose-gc dist/benchmark.js",
     "lint": "monoreact lint \"src/**/*.{js,jsx,ts,tsx}\"",
-    "prepublishOnly": "yarn build"
+    "prepublishOnly": "yarn build",
+    "benchmark": "npm run build && node benchmark/benchmark.js"
   },
   "publishConfig": {
     "access": "public"
