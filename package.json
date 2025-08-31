@@ -20,7 +20,7 @@
   },
   "workspace": true,
   "devDependencies": {
-    "@types/jest": "27.5.2",
+    "@types/jest": "30.0.0",
     "@typescript-eslint/parser": "6.21.0",
     "eslint-config-react-app": "6.0.0",
     "monoreact": "0.35.0",
