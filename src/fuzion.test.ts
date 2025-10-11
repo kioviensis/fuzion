@@ -1,7 +1,7 @@
-import { fuzion } from './fuzion';
-import { map } from './map/map';
 import { filter } from './filter/filter';
 import { forEach } from './forEach/forEach';
+import { fuzion } from './fuzion';
+import { map } from './map/map';
 
 describe('fuzion', () => {
   test('should return empty array when input is empty and empty handlers', () => {
@@ -189,6 +189,6 @@ describe('fuzion', () => {
         map(a => a.charCodeAt(0)), // 9
         map(a => a.charCodeAt(0)), // 10 any (number does not have charCodeAt() but typing skips it since the input is "any"
       ),
-    ).toThrowError(TypeError);
+    ).toThrow(TypeError);
   });
 });
