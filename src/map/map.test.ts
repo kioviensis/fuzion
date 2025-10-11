@@ -1,5 +1,5 @@
-import { map } from './map';
 import { fuzion } from '../fuzion';
+import { map } from './map';
 
 describe('[operator] map', () => {
   test('should return indices', () => {

@@ -5,14 +5,10 @@ import { map } from './map/map';
 
 describe('fuzion', () => {
   test('should return empty array when input is empty and empty handlers', () => {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
     expect(fuzion([])).toEqual([]);
   });
 
   test('should return input array when empty handlers array', () => {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
     expect(fuzion([1, 2, 3])).toEqual([1, 2, 3]);
   });
 
@@ -24,13 +20,23 @@ describe('fuzion', () => {
         map(a => a * 2),
       ),
     ).toEqual([12, 18]);
+
+    expect(
+        fuzion(
+            [1, 3, 6, 9],
+            filter(a => a > 5),
+            map(a => a * 2),
+            filter(a => a > 5),
+            map(a => a * 2),
+        ),
+    ).toEqual([24, 36]);
   });
 
   test('should filter numbers and map them', () => {
     expect(
       fuzion(
         [1, 3, 6, 's'],
-        filter((x): x is number => typeof x === 'number'),
+        filter(x => typeof x === 'number'),
         map(a => a * 2),
       ),
     ).toEqual([2, 6, 12]);
@@ -187,6 +193,7 @@ describe('fuzion', () => {
         map(a => a.charCodeAt(0)), // 9
         map(a => a.toFixed(0)), // 8
         map(a => a.charCodeAt(0)), // 9
+        // @ts-expect-error number has no .charCodeAt()
         map(a => a.charCodeAt(0)), // 10 any (number does not have charCodeAt() but typing skips it since the input is "any"
       ),
     ).toThrow(TypeError);

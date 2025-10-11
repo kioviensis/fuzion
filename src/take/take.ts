@@ -1,8 +1,8 @@
 import { Kind } from '../common';
 
 export type Take = {
-  kind: Kind.TAKE;
-  run: () => number;
+  readonly kind: Kind.TAKE;
+  readonly run: () => number;
 };
 
 export function take(num: number): Take {

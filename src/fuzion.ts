@@ -1,9 +1,9 @@
 import { Kind } from './common';
-import type { Map } from './map/map';
 import type { Filter } from './filter/filter';
-import type { ForEach } from './forEach/forEach';
-import type { Take } from './take/take';
 import { NEGATIVE_SYMBOL } from './filter/filter';
+import type { ForEach } from './forEach/forEach';
+import type { Map } from './map/map';
+import type { Take } from './take/take';
 
 /**
  * Typing https://github.com/ReactiveX/rxjs/blob/master/src/internal/util/pipe.ts
@@ -13,110 +13,149 @@ import { NEGATIVE_SYMBOL } from './filter/filter';
  * Find
  */
 
-type operators<T, O> = Map<T, O> | Filter<T, T> | ForEach<T> | Take;
-// export function fuzion(): typeof identity;
-export function fuzion<
-  TArgs extends any,
-  R1,
-  R2,
-  R3,
-  R4,
-  R5,
-  R6,
-  R7,
-  R8,
-  R9,
-  RLast,
-  C = RLast extends Map<any, infer Result> ? Result : unknown,
->(
-  ...fns: [
-    input: TArgs[],
-    f1: operators<TArgs, R1>,
-    f2: operators<R1, R2>,
-    f3: operators<R2, R3>,
-    f4: operators<R3, R4>,
-    f5: operators<R4, R5>,
-    f6: operators<R5, R6>,
-    f7: operators<R6, R7>,
-    f8: operators<R7, R8>,
-    f9: operators<R8, R9>,
-    ...intermediateOperators: Array<operators<any, any>>,
-    fnLast: operators<any, C>,
-  ]
-): C;
-export function fuzion<TArgs extends any, R1, R2, R3, R4, R5, R6, R7, R8, R9>(
-  input: TArgs[],
-  f1: operators<TArgs, R1>,
-  f2: operators<R1, R2>,
-  f3: operators<R2, R3>,
-  f4: operators<R3, R4>,
-  f5: operators<R4, R5>,
-  f6: operators<R5, R6>,
-  f7: operators<R6, R7>,
-  f8: operators<R7, R8>,
-  f9: operators<R8, R9>,
-): R9;
-export function fuzion<TArgs extends any, R1, R2, R3, R4, R5, R6, R7, R8>(
-  input: TArgs[],
-  f1: operators<TArgs, R1>,
-  f2: operators<R1, R2>,
-  f3: operators<R2, R3>,
-  f4: operators<R3, R4>,
-  f5: operators<R4, R5>,
-  f6: operators<R5, R6>,
-  f7: operators<R6, R7>,
-  f8: operators<R7, R8>,
-): R8;
-export function fuzion<TArgs extends any, R1, R2, R3, R4, R5, R6, R7>(
-  input: TArgs[],
-  f1: operators<TArgs, R1>,
-  f2: operators<R1, R2>,
-  f3: operators<R2, R3>,
-  f4: operators<R3, R4>,
-  f5: operators<R4, R5>,
-  f6: operators<R5, R6>,
-  f7: operators<R6, R7>,
-): R7;
-export function fuzion<TArgs extends any, R1, R2, R3, R4, R5, R6>(
-  input: TArgs[],
-  f1: operators<TArgs, R1>,
-  f2: operators<R1, R2>,
-  f3: operators<R2, R3>,
-  f4: operators<R3, R4>,
-  f5: operators<R4, R5>,
-  f6: operators<R5, R6>,
-): R6;
-export function fuzion<TArgs extends any, R1, R2, R3, R4, R5>(
-  input: TArgs[],
-  f1: operators<TArgs, R1>,
-  f2: operators<R1, R2>,
-  f3: operators<R2, R3>,
-  f4: operators<R3, R4>,
-  f5: operators<R4, R5>,
-): R5;
-export function fuzion<TArgs extends any, R1, R2, R3, R4>(
-  input: TArgs[],
-  f1: operators<TArgs, R1>,
-  f2: operators<R1, R2>,
-  f3: operators<R2, R3>,
-  f4: operators<R3, R4>,
-): R4;
-export function fuzion<TArgs extends any, R1, R2, R3>(
-  input: TArgs[],
-  f1: operators<TArgs, R1>,
-  f2: operators<R1, R2>,
-  f3: operators<R2, R3>,
-): R3;
-export function fuzion<TArgs extends any, R1, R2>(
-  input: TArgs[],
-  f1: operators<TArgs, R1>,
-  f2: operators<R1, R2>,
-): R2;
-export function fuzion<TArgs extends any, R1>(
-  input: TArgs[],
-  f1: operators<TArgs, R1>,
-): R1;
-export function fuzion<TArgs>(input: TArgs[], ...operators: any[]): any[] {
+type Operator<TInput, TOutput = TInput> =
+  | Map<TInput, TOutput>
+  | Filter<TInput, TInput>
+  | ForEach<TInput>
+  | Take;
+
+export function fuzion<TInput>(input: TInput[]): TInput[];
+export function fuzion<TInput, TOutput>(
+  input: TInput[],
+  operator: Operator<TInput, TOutput>
+): TOutput[];
+export function fuzion<TInput, T1 extends TInput, T2>(
+  input: TInput[],
+  op1: Filter<TInput, T1>,
+  op2: Operator<T1, T2>
+): T2[];
+export function fuzion<TInput, T1 extends TInput, T2>(
+  input: TInput[],
+  op1: Operator<TInput, T1>,
+  op2: Operator<T1, T2>
+): T2[];
+export function fuzion<TInput, T1 extends TInput, T2, T3>(
+  input: TInput[],
+  op1: Operator<TInput, T1>,
+  op2: Operator<T1, T2>,
+  op3: Operator<T2, T3>
+): T3[];
+export function fuzion<TInput, T1 extends TInput, T2, T3, T4>(
+  input: TInput[],
+  op1: Operator<TInput, T1>,
+  op2: Operator<T1, T2>,
+  op3: Operator<T2, T3>,
+  op4: Operator<T3, T4>
+): T4[];
+export function fuzion<TInput, T1 extends TInput, T2, T3, T4, T5>(
+  input: TInput[],
+  op1: Operator<TInput, T1>,
+  op2: Operator<T1, T2>,
+  op3: Operator<T2, T3>,
+  op4: Operator<T3, T4>,
+  op5: Operator<T4, T5>
+): T5[];
+export function fuzion<TInput, T1 extends TInput, T2, T3, T4, T5, T6>(
+  input: TInput[],
+  op1: Operator<TInput, T1>,
+  op2: Operator<T1, T2>,
+  op3: Operator<T2, T3>,
+  op4: Operator<T3, T4>,
+  op5: Operator<T4, T5>,
+  op6: Operator<T5, T6>
+): T6[];
+export function fuzion<TInput, T1 extends TInput, T2, T3, T4, T5, T6, T7>(
+  input: TInput[],
+  op1: Operator<TInput, T1>,
+  op2: Operator<T1, T2>,
+  op3: Operator<T2, T3>,
+  op4: Operator<T3, T4>,
+  op5: Operator<T4, T5>,
+  op6: Operator<T5, T6>,
+  op7: Operator<T6, T7>
+): T7[];
+export function fuzion<TInput, T1 extends TInput, T2, T3, T4, T5, T6, T7, T8>(
+  input: TInput[],
+  op1: Operator<TInput, T1>,
+  op2: Operator<T1, T2>,
+  op3: Operator<T2, T3>,
+  op4: Operator<T3, T4>,
+  op5: Operator<T4, T5>,
+  op6: Operator<T5, T6>,
+  op7: Operator<T6, T7>,
+  op8: Operator<T7, T8>
+): T8[];
+export function fuzion<TInput, T1 extends TInput, T2, T3, T4, T5, T6, T7, T8, T9>(
+  input: TInput[],
+  op1: Operator<TInput, T1>,
+  op2: Operator<T1, T2>,
+  op3: Operator<T2, T3>,
+  op4: Operator<T3, T4>,
+  op5: Operator<T4, T5>,
+  op6: Operator<T5, T6>,
+  op7: Operator<T6, T7>,
+  op8: Operator<T7, T8>,
+  op9: Operator<T8, T9>
+): T9[];
+export function fuzion<TInput, T1 extends TInput, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
+  input: TInput[],
+  op1: Operator<TInput, T1>,
+  op2: Operator<T1, T2>,
+  op3: Operator<T2, T3>,
+  op4: Operator<T3, T4>,
+  op5: Operator<T4, T5>,
+  op6: Operator<T5, T6>,
+  op7: Operator<T6, T7>,
+  op8: Operator<T7, T8>,
+  op9: Operator<T8, T9>,
+  op10: Operator<T9, T10>
+): T10[];
+export function fuzion<TInput, T1 extends TInput, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(
+  input: TInput[],
+  op1: Operator<TInput, T1>,
+  op2: Operator<T1, T2>,
+  op3: Operator<T2, T3>,
+  op4: Operator<T3, T4>,
+  op5: Operator<T4, T5>,
+  op6: Operator<T5, T6>,
+  op7: Operator<T6, T7>,
+  op8: Operator<T7, T8>,
+  op9: Operator<T8, T9>,
+  op10: Operator<T9, T10>,
+  op11: Operator<T10, T11>
+): T11[];
+export function fuzion<TInput, T1 extends TInput, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(
+  input: TInput[],
+  op1: Operator<TInput, T1>,
+  op2: Operator<T1, T2>,
+  op3: Operator<T2, T3>,
+  op4: Operator<T3, T4>,
+  op5: Operator<T4, T5>,
+  op6: Operator<T5, T6>,
+  op7: Operator<T6, T7>,
+  op8: Operator<T7, T8>,
+  op9: Operator<T8, T9>,
+  op10: Operator<T9, T10>,
+  op11: Operator<T10, T11>,
+  op12: Operator<T11, T12>
+): T12[];
+export function fuzion<TInput, T1 extends TInput, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>(
+  input: TInput[],
+  op1: Operator<TInput, T1>,
+  op2: Operator<T1, T2>,
+  op3: Operator<T2, T3>,
+  op4: Operator<T3, T4>,
+  op5: Operator<T4, T5>,
+  op6: Operator<T5, T6>,
+  op7: Operator<T6, T7>,
+  op8: Operator<T7, T8>,
+  op9: Operator<T8, T9>,
+  op10: Operator<T9, T10>,
+  op11: Operator<T10, T11>,
+  op12: Operator<T11, T12>,
+  op13: Operator<T12, T13>
+): T13[];
+export function fuzion<TInput>(input: TInput[], ...operators: Operator<any, any>[]): any[] {
   if (input.length === 0 || operators.length === 0) {
     return input;
   }
