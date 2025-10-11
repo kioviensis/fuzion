@@ -1,6 +1,6 @@
 import { Kind } from '../common';
 
-export type Filter<T, R extends T = T> = {
+export type Filter<T, R = T> = {
   readonly kind: Kind.FILTER;
   readonly run: (value: T, index: number) => R;
 };
