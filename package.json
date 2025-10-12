@@ -1,6 +1,6 @@
 {
   "name": "fuzion",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "High-performance shortcut fusion for JavaScript and TypeScript array operations",
   "private": false,
   "license": "MIT",
