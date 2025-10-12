@@ -1,160 +1,180 @@
 import { Kind } from './common';
-import type { Map } from './map/map';
 import type { Filter } from './filter/filter';
-import type { ForEach } from './forEach/forEach';
-import type { Take } from './take/take';
 import { NEGATIVE_SYMBOL } from './filter/filter';
+import type { ForEach } from './forEach/forEach';
+import type { Map } from './map/map';
+import type { Take } from './take/take';
 
-/**
- * Typing https://github.com/ReactiveX/rxjs/blob/master/src/internal/util/pipe.ts
- * Reduce
- * First
- * Has
- * Find
- */
+type Operator<TInput, TOutput = TInput> =
+  | Map<TInput, TOutput>
+  | Filter<TInput, TOutput>
+  | ForEach<TInput>
+  | Take;
 
-type operators<T, O> = Map<T, O> | Filter<T, T> | ForEach<T> | Take;
-// export function fuzion(): typeof identity;
-export function fuzion<
-  TArgs extends any,
-  R1,
-  R2,
-  R3,
-  R4,
-  R5,
-  R6,
-  R7,
-  R8,
-  R9,
-  RLast,
-  C = RLast extends Map<any, infer Result> ? Result : unknown,
->(
-  ...fns: [
-    input: TArgs[],
-    f1: operators<TArgs, R1>,
-    f2: operators<R1, R2>,
-    f3: operators<R2, R3>,
-    f4: operators<R3, R4>,
-    f5: operators<R4, R5>,
-    f6: operators<R5, R6>,
-    f7: operators<R6, R7>,
-    f8: operators<R7, R8>,
-    f9: operators<R8, R9>,
-    ...intermediateOperators: Array<operators<any, any>>,
-    fnLast: operators<any, C>,
-  ]
-): C;
-export function fuzion<TArgs extends any, R1, R2, R3, R4, R5, R6, R7, R8, R9>(
-  input: TArgs[],
-  f1: operators<TArgs, R1>,
-  f2: operators<R1, R2>,
-  f3: operators<R2, R3>,
-  f4: operators<R3, R4>,
-  f5: operators<R4, R5>,
-  f6: operators<R5, R6>,
-  f7: operators<R6, R7>,
-  f8: operators<R7, R8>,
-  f9: operators<R8, R9>,
-): R9;
-export function fuzion<TArgs extends any, R1, R2, R3, R4, R5, R6, R7, R8>(
-  input: TArgs[],
-  f1: operators<TArgs, R1>,
-  f2: operators<R1, R2>,
-  f3: operators<R2, R3>,
-  f4: operators<R3, R4>,
-  f5: operators<R4, R5>,
-  f6: operators<R5, R6>,
-  f7: operators<R6, R7>,
-  f8: operators<R7, R8>,
-): R8;
-export function fuzion<TArgs extends any, R1, R2, R3, R4, R5, R6, R7>(
-  input: TArgs[],
-  f1: operators<TArgs, R1>,
-  f2: operators<R1, R2>,
-  f3: operators<R2, R3>,
-  f4: operators<R3, R4>,
-  f5: operators<R4, R5>,
-  f6: operators<R5, R6>,
-  f7: operators<R6, R7>,
-): R7;
-export function fuzion<TArgs extends any, R1, R2, R3, R4, R5, R6>(
-  input: TArgs[],
-  f1: operators<TArgs, R1>,
-  f2: operators<R1, R2>,
-  f3: operators<R2, R3>,
-  f4: operators<R3, R4>,
-  f5: operators<R4, R5>,
-  f6: operators<R5, R6>,
-): R6;
-export function fuzion<TArgs extends any, R1, R2, R3, R4, R5>(
-  input: TArgs[],
-  f1: operators<TArgs, R1>,
-  f2: operators<R1, R2>,
-  f3: operators<R2, R3>,
-  f4: operators<R3, R4>,
-  f5: operators<R4, R5>,
-): R5;
-export function fuzion<TArgs extends any, R1, R2, R3, R4>(
-  input: TArgs[],
-  f1: operators<TArgs, R1>,
-  f2: operators<R1, R2>,
-  f3: operators<R2, R3>,
-  f4: operators<R3, R4>,
-): R4;
-export function fuzion<TArgs extends any, R1, R2, R3>(
-  input: TArgs[],
-  f1: operators<TArgs, R1>,
-  f2: operators<R1, R2>,
-  f3: operators<R2, R3>,
-): R3;
-export function fuzion<TArgs extends any, R1, R2>(
-  input: TArgs[],
-  f1: operators<TArgs, R1>,
-  f2: operators<R1, R2>,
-): R2;
-export function fuzion<TArgs extends any, R1>(
-  input: TArgs[],
-  f1: operators<TArgs, R1>,
-): R1;
-export function fuzion<TArgs>(input: TArgs[], ...operators: any[]): any[] {
+export function fuzion<TInput>(input: TInput[]): TInput[];
+export function fuzion<TInput, TOutput>(
+  input: TInput[],
+  operator: Operator<TInput, TOutput>,
+): TOutput[];
+export function fuzion<TInput, T1, T2>(
+  input: TInput[],
+  op1: Filter<TInput, T1>,
+  op2: Operator<T1, T2>,
+): T2[];
+export function fuzion<TInput, T1, T2>(
+  input: TInput[],
+  op1: Operator<TInput, T1>,
+  op2: Operator<T1, T2>,
+): T2[];
+export function fuzion<TInput, T1, T2, T3>(
+  input: TInput[],
+  op1: Operator<TInput, T1>,
+  op2: Operator<T1, T2>,
+  op3: Operator<T2, T3>,
+): T3[];
+export function fuzion<TInput, T1, T2, T3, T4>(
+  input: TInput[],
+  op1: Operator<TInput, T1>,
+  op2: Operator<T1, T2>,
+  op3: Operator<T2, T3>,
+  op4: Operator<T3, T4>,
+): T4[];
+export function fuzion<TInput, T1, T2, T3, T4, T5>(
+  input: TInput[],
+  op1: Operator<TInput, T1>,
+  op2: Operator<T1, T2>,
+  op3: Operator<T2, T3>,
+  op4: Operator<T3, T4>,
+  op5: Operator<T4, T5>,
+): T5[];
+export function fuzion<TInput, T1, T2, T3, T4, T5, T6>(
+  input: TInput[],
+  op1: Operator<TInput, T1>,
+  op2: Operator<T1, T2>,
+  op3: Operator<T2, T3>,
+  op4: Operator<T3, T4>,
+  op5: Operator<T4, T5>,
+  op6: Operator<T5, T6>,
+): T6[];
+export function fuzion<TInput, T1, T2, T3, T4, T5, T6, T7>(
+  input: TInput[],
+  op1: Operator<TInput, T1>,
+  op2: Operator<T1, T2>,
+  op3: Operator<T2, T3>,
+  op4: Operator<T3, T4>,
+  op5: Operator<T4, T5>,
+  op6: Operator<T5, T6>,
+  op7: Operator<T6, T7>,
+): T7[];
+export function fuzion<TInput, T1, T2, T3, T4, T5, T6, T7, T8>(
+  input: TInput[],
+  op1: Operator<TInput, T1>,
+  op2: Operator<T1, T2>,
+  op3: Operator<T2, T3>,
+  op4: Operator<T3, T4>,
+  op5: Operator<T4, T5>,
+  op6: Operator<T5, T6>,
+  op7: Operator<T6, T7>,
+  op8: Operator<T7, T8>,
+): T8[];
+export function fuzion<TInput, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
+  input: TInput[],
+  op1: Operator<TInput, T1>,
+  op2: Operator<T1, T2>,
+  op3: Operator<T2, T3>,
+  op4: Operator<T3, T4>,
+  op5: Operator<T4, T5>,
+  op6: Operator<T5, T6>,
+  op7: Operator<T6, T7>,
+  op8: Operator<T7, T8>,
+  op9: Operator<T8, T9>,
+): T9[];
+export function fuzion<TInput, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
+  input: TInput[],
+  op1: Operator<TInput, T1>,
+  op2: Operator<T1, T2>,
+  op3: Operator<T2, T3>,
+  op4: Operator<T3, T4>,
+  op5: Operator<T4, T5>,
+  op6: Operator<T5, T6>,
+  op7: Operator<T6, T7>,
+  op8: Operator<T7, T8>,
+  op9: Operator<T8, T9>,
+  op10: Operator<T9, T10>,
+): T10[];
+export function fuzion<TInput>(
+  input: TInput[],
+  ...operators: Operator<any, any>[]
+): any[] {
   if (input.length === 0 || operators.length === 0) {
     return input;
   }
 
-  const output = [];
   let length = input.length;
+  let takeCount = Infinity;
+  const processedOperators = [];
 
-  operators = operators.filter(operator => {
+  for (let i = 0; i < operators.length; i += 1) {
+    const operator = operators[i];
     if (operator.kind === Kind.TAKE) {
-      length = Math.min(length, operator.run());
-      return false;
+      const count = operator.run();
+      if (typeof count === 'number' && count >= 0 && isFinite(count)) {
+        takeCount = Math.min(takeCount, count);
+      } else if (count <= 0) {
+        return [];
+      }
+    } else {
+      processedOperators.push(operator);
     }
+  }
 
-    return true;
-  });
+  if (takeCount === 0) {
+    return [];
+  }
+
+  let outputCount = 0;
+
+  const hasFilters = processedOperators.some(op => op.kind === Kind.FILTER);
+
+  if (!hasFilters) {
+    // MAP-only chain: use pre-allocated array
+      const outputSize = Math.min(length, takeCount)
+    const output = new Array(outputSize);
+    for (let index = 0; index < outputSize; index += 1) {
+      let currentValue = input[index];
+      for (let i = 0; i < processedOperators.length; i += 1) {
+        currentValue = processedOperators[i].run(currentValue, index);
+      }
+    output[index] = currentValue;
+    }
+    return output;
+  }
+
+  const output = [];
 
   for (let index = 0; index < length; index += 1) {
     let currentValue = input[index];
     let shouldSkip = false;
 
-    for (const operator of operators) {
+    for (let i = 0; i < processedOperators.length; i += 1) {
+      const operator = processedOperators[i];
       const value = operator.run(currentValue, index);
 
       if (operator.kind === Kind.MAP) {
         currentValue = value;
+      } else if (operator.kind === Kind.FOR_EACH) {
+        currentValue = value;
       } else if (operator.kind === Kind.FILTER && value === NEGATIVE_SYMBOL) {
-        // no need to run any handler next, it's abandoned value now
         shouldSkip = true;
         break;
       }
     }
 
-    if (shouldSkip) {
-      shouldSkip = false;
-      continue;
+    if (!shouldSkip) {
+      output.push(currentValue);
+      outputCount += 1;
+      if (outputCount >= takeCount) break;
     }
-
-    output.push(currentValue);
   }
 
   return output;
