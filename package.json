@@ -50,6 +50,9 @@
   "engines": {
     "node": ">=16.0.0"
   },
+  "resolutions": {
+    "node-sass": "npm:sass@^1.77.0"
+  },
   "keywords": [
     "shortcut-fusion",
     "array-optimization",
