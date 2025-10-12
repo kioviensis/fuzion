@@ -77,18 +77,7 @@ export function fuzion<TInput, T1, T2, T3, T4, T5, T6, T7, T8>(
   op7: Operator<T6, T7>,
   op8: Operator<T7, T8>,
 ): T8[];
-export function fuzion<
-  TInput,
-  T1,
-  T2,
-  T3,
-  T4,
-  T5,
-  T6,
-  T7,
-  T8,
-  T9,
->(
+export function fuzion<TInput, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
   input: TInput[],
   op1: Operator<TInput, T1>,
   op2: Operator<T1, T2>,
@@ -100,19 +89,7 @@ export function fuzion<
   op8: Operator<T7, T8>,
   op9: Operator<T8, T9>,
 ): T9[];
-export function fuzion<
-  TInput,
-  T1,
-  T2,
-  T3,
-  T4,
-  T5,
-  T6,
-  T7,
-  T8,
-  T9,
-  T10,
->(
+export function fuzion<TInput, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
   input: TInput[],
   op1: Operator<TInput, T1>,
   op2: Operator<T1, T2>,
@@ -125,93 +102,6 @@ export function fuzion<
   op9: Operator<T8, T9>,
   op10: Operator<T9, T10>,
 ): T10[];
-export function fuzion<
-  TInput,
-  T1,
-  T2,
-  T3,
-  T4,
-  T5,
-  T6,
-  T7,
-  T8,
-  T9,
-  T10,
-  T11,
->(
-  input: TInput[],
-  op1: Operator<TInput, T1>,
-  op2: Operator<T1, T2>,
-  op3: Operator<T2, T3>,
-  op4: Operator<T3, T4>,
-  op5: Operator<T4, T5>,
-  op6: Operator<T5, T6>,
-  op7: Operator<T6, T7>,
-  op8: Operator<T7, T8>,
-  op9: Operator<T8, T9>,
-  op10: Operator<T9, T10>,
-  op11: Operator<T10, T11>,
-): T11[];
-export function fuzion<
-  TInput,
-  T1,
-  T2,
-  T3,
-  T4,
-  T5,
-  T6,
-  T7,
-  T8,
-  T9,
-  T10,
-  T11,
-  T12,
->(
-  input: TInput[],
-  op1: Operator<TInput, T1>,
-  op2: Operator<T1, T2>,
-  op3: Operator<T2, T3>,
-  op4: Operator<T3, T4>,
-  op5: Operator<T4, T5>,
-  op6: Operator<T5, T6>,
-  op7: Operator<T6, T7>,
-  op8: Operator<T7, T8>,
-  op9: Operator<T8, T9>,
-  op10: Operator<T9, T10>,
-  op11: Operator<T10, T11>,
-  op12: Operator<T11, T12>,
-): T12[];
-export function fuzion<
-  TInput,
-  T1,
-  T2,
-  T3,
-  T4,
-  T5,
-  T6,
-  T7,
-  T8,
-  T9,
-  T10,
-  T11,
-  T12,
-  T13,
->(
-  input: TInput[],
-  op1: Operator<TInput, T1>,
-  op2: Operator<T1, T2>,
-  op3: Operator<T2, T3>,
-  op4: Operator<T3, T4>,
-  op5: Operator<T4, T5>,
-  op6: Operator<T5, T6>,
-  op7: Operator<T6, T7>,
-  op8: Operator<T7, T8>,
-  op9: Operator<T8, T9>,
-  op10: Operator<T9, T10>,
-  op11: Operator<T10, T11>,
-  op12: Operator<T11, T12>,
-  op13: Operator<T12, T13>,
-): T13[];
 export function fuzion<TInput>(
   input: TInput[],
   ...operators: Operator<any, any>[]
@@ -221,21 +111,42 @@ export function fuzion<TInput>(
   }
 
   let length = input.length;
+  let takeCount = Infinity;
   const processedOperators = [];
 
-  // Use indexed loop for better performance
   for (let i = 0; i < operators.length; i += 1) {
     const operator = operators[i];
     if (operator.kind === Kind.TAKE) {
-      const takeCount = operator.run();
-      if (typeof takeCount === 'number' && takeCount >= 0 && isFinite(takeCount)) {
-        length = Math.min(length, takeCount);
-      } else {
-        length = 0;
+      const count = operator.run();
+      if (typeof count === 'number' && count >= 0 && isFinite(count)) {
+        takeCount = Math.min(takeCount, count);
+      } else if (count <= 0) {
+        return [];
       }
     } else {
       processedOperators.push(operator);
     }
+  }
+
+  if (takeCount === 0) {
+    return [];
+  }
+
+  length = Math.min(length, takeCount);
+
+  const hasFilters = processedOperators.some(op => op.kind === Kind.FILTER);
+
+  if (!hasFilters) {
+    // MAP-only chain: use pre-allocated array
+    const output = new Array(length);
+    for (let index = 0; index < length; index += 1) {
+      let currentValue = input[index];
+      for (let i = 0; i < processedOperators.length; i += 1) {
+        currentValue = processedOperators[i].run(currentValue, index);
+      }
+      output[index] = currentValue;
+    }
+    return output;
   }
 
   const output = [];
@@ -249,6 +160,8 @@ export function fuzion<TInput>(
       const value = operator.run(currentValue, index);
 
       if (operator.kind === Kind.MAP) {
+        currentValue = value;
+      } else if (operator.kind === Kind.FOR_EACH) {
         currentValue = value;
       } else if (operator.kind === Kind.FILTER && value === NEGATIVE_SYMBOL) {
         shouldSkip = true;

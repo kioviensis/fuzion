@@ -2,7 +2,7 @@ import { Kind } from '../common';
 
 export type MapFn<TValue, TResult> = (value: TValue, index: number) => TResult;
 export type Map<TValue, TResult> = {
-  readonly kind: Kind.MAP;
+  readonly kind: typeof Kind.MAP;
   readonly run: MapFn<TValue, TResult>;
 };
 

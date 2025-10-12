@@ -1,18 +1,34 @@
 {
   "name": "fuzion",
   "version": "0.1.0",
+  "description": "High-performance shortcut fusion for JavaScript and TypeScript array operations",
   "private": false,
   "license": "MIT",
-  "author": "tarsinzer",
+  "author": "kioviensis",
   "main": "dist/bundle.cjs.js",
   "module": "dist/bundle.js",
   "source": "src/publicApi.ts",
   "types": "dist/publicApi.d.ts",
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kioviensis/fuzion.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kioviensis/fuzion/issues"
+  },
+  "homepage": "https://github.com/kioviensis/fuzion#readme",
   "scripts": {
     "start": "monoreact watch",
     "build": "monoreact build",
     "test": "monoreact test --passWithNoTests",
+    "test:watch": "monoreact test",
     "lint": "monoreact lint \"src/**/*.{js,jsx,ts,tsx}\"",
+    "lint:fix": "monoreact lint \"src/**/*.{js,jsx,ts,tsx}\" --fix",
     "prepublishOnly": "yarn build"
   },
   "publishConfig": {
@@ -30,5 +46,21 @@
     "prettier": "3.6.2",
     "tslib": "2.8.1",
     "typescript": "5.9.3"
-  }
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "keywords": [
+    "shortcut-fusion",
+    "array-optimization",
+    "functional-programming",
+    "performance",
+    "typescript",
+    "map",
+    "filter",
+    "take",
+    "forEach",
+    "fusion",
+    "optimization"
+  ]
 }

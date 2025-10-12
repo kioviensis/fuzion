@@ -1,7 +1,7 @@
 import { Kind } from '../common';
 
 export type Filter<T, R = T> = {
-  readonly kind: Kind.FILTER;
+  readonly kind: typeof Kind.FILTER;
   readonly run: (value: T, index: number) => R;
 };
 

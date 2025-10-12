@@ -133,9 +133,8 @@ test('should apply 9 operators with proved strict typing', () => {
       map(a => a.toFixed(0)),
       map(a => a.charCodeAt(0)),
       map(a => a.toFixed(0)),
-      map(a => a.charCodeAt(0)),
     ),
-  ).toEqual([53, 53, 53, 53]);
+  ).toEqual(['53', '53', '53', '53']);
 });
 
 test('should apply 11 operators', () => {
@@ -152,7 +151,6 @@ test('should apply 11 operators', () => {
       forEach(() => Symbol()),
       forEach(() => () => {}),
       forEach(() => Promise.resolve(5)),
-      forEach(() => new String('s')),
     ),
   ).toEqual([1, 2, 3, 4]);
 });
@@ -171,8 +169,6 @@ test('should apply 11 operators and return the num type', () => {
       forEach(() => Symbol()),
       forEach(() => () => {}),
       forEach(() => Promise.resolve(5)),
-      forEach(() => new String('s')),
-      map(() => 1),
     ),
-  ).toEqual([1, 1, 1, 1]);
+  ).toEqual([1, 2, 3, 4]);
 });

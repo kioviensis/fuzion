@@ -1,7 +1,7 @@
 import { Kind } from '../common';
 
 export type Take = {
-  readonly kind: Kind.TAKE;
+  readonly kind: typeof Kind.TAKE;
   readonly run: () => number;
 };
 

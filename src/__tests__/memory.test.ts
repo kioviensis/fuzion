@@ -12,7 +12,7 @@ test('should not leak memory with repeated operations', () => {
   const initialMemory = getMemoryUsage();
   const testData = generateTestData(1000);
 
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < 100; i += 1) {
     fuzion(
       testData,
       filter(x => x > 500),
@@ -101,7 +101,7 @@ test('should not accumulate memory with chained operations', () => {
   const initialMemory = getMemoryUsage();
   const testData = generateTestData(1000);
 
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < 50; i += 1) {
     const result = fuzion(
       testData,
       map(x => x + i),
@@ -132,7 +132,7 @@ test('should handle circular references without memory leaks', () => {
   const initialMemory = getMemoryUsage();
   const testData = [];
 
-  for (let i = 0; i < 1000; i++) {
+  for (let i = 0; i < 1000; i += 1) {
     const obj = { id: i, ref: null };
     testData.push(obj);
   }

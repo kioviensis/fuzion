@@ -1,7 +1,7 @@
 import { Kind } from '../common';
 
 export type ForEach<T> = {
-  readonly kind: Kind.FOR_EACH;
+  readonly kind: typeof Kind.FOR_EACH;
   readonly run: (value: T, index: number) => T;
 };
 

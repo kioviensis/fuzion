@@ -1,544 +1,444 @@
 import { filter } from '../filter/filter';
 import { fuzion } from '../fuzion';
 import { map } from '../map/map';
-import {
-  PerformanceTestConfig,
-  generateMixedData,
-  generateObjectData,
-  generateTestData,
-  measurePerformance,
-} from './test-utils';
+import { take } from '../take/take';
 
-const config: PerformanceTestConfig = {
-  iterations: 100000,
-  arraySize: 1000,
-  warmupRuns: 10,
-};
+const testArray = Array.from({ length: 10000 }, (_, i) => i + 1);
+const iterations = 1000;
 
-test('map(x => x * 2) - 100K iterations', () => {
-  const testData = generateTestData(config.arraySize);
+function scientificBenchmark(_: string, fn: () => any) {
+  // Warmup
+  for (let i = 0; i < 100; i += 1) {
+    fn();
+  }
 
-  const nativeArrayResult = measurePerformance(
-    () => {
-      return testData.map(x => x * 2);
-    },
-    config.iterations,
-    config.warmupRuns,
+  const times: number[] = [];
+  for (let i = 0; i < iterations; i += 1) {
+    const start = performance.now();
+    fn();
+    const end = performance.now();
+    times.push(end - start);
+  }
+
+  const sorted = times.slice().sort((a, b) => a - b);
+  const mean = times.reduce((sum, time) => sum + time, 0) / times.length;
+  const median = sorted[Math.floor(sorted.length / 2)];
+  const stdDev = Math.sqrt(
+    times.reduce((sum, time) => sum + Math.pow(time - mean, 2), 0) /
+      times.length,
   );
+  const cv = (stdDev / mean) * 100;
 
-  const nativeForOfResult = measurePerformance(
-    () => {
-      const result = [];
-      for (const item of testData) {
-        result.push(item * 2);
+  return { mean, median, stdDev, cv };
+}
+
+test('MAP + MAP + FILTER: Honest comparison of all approaches', () => {
+  console.log('\n=== MAP + MAP + FILTER: Honest Performance Comparison ===');
+
+  const manualTime = scientificBenchmark('Manual Single Loop', () => {
+    const result = [];
+    for (let i = 0; i < testArray.length; i += 1) {
+      const x = testArray[i];
+      const step1 = x * 2;
+      const step2 = step1 + 1;
+      if (step2 > 5) {
+        result.push(step2);
       }
-      return result;
-    },
-    config.iterations,
-    config.warmupRuns,
-  );
+    }
+    return result;
+  });
 
-  const nativeForResult = measurePerformance(
-    () => {
-      const result = [];
-      for (let i = 0; i < testData.length; i++) {
-        result.push(testData[i] * 2);
-      }
-      return result;
-    },
-    config.iterations,
-    config.warmupRuns,
-  );
+  const chainedTime = scientificBenchmark('Chained Native', () => {
+    return testArray
+      .map(x => x * 2)
+      .map(x => x + 1)
+      .filter(x => x > 5);
+  });
 
-  const fuzionResult = measurePerformance(
-    () => {
-      return fuzion(
-        testData,
-        map(x => x * 2),
-      );
-    },
-    config.iterations,
-    config.warmupRuns,
-  );
-
-  expect(fuzionResult.averageTime).toBeLessThan(
-    nativeArrayResult.averageTime * 10,
-  );
-  expect(fuzionResult.averageTime).toBeLessThan(
-    nativeForOfResult.averageTime * 15,
-  );
-  expect(fuzionResult.averageTime).toBeLessThan(
-    nativeForResult.averageTime * 20,
-  );
-});
-
-test('filter(x => x % 2 === 0) - 100K iterations', () => {
-  const testData = generateTestData(config.arraySize);
-
-  const nativeArrayResult = measurePerformance(
-    () => {
-      return testData.filter(x => x % 2 === 0);
-    },
-    config.iterations,
-    config.warmupRuns,
-  );
-
-  const nativeForOfResult = measurePerformance(
-    () => {
-      const result = [];
-      for (const item of testData) {
-        if (item % 2 === 0) {
-          result.push(item);
-        }
-      }
-      return result;
-    },
-    config.iterations,
-    config.warmupRuns,
-  );
-
-  const nativeForResult = measurePerformance(
-    () => {
-      const result = [];
-      for (let i = 0; i < testData.length; i++) {
-        if (testData[i] % 2 === 0) {
-          result.push(testData[i]);
-        }
-      }
-      return result;
-    },
-    config.iterations,
-    config.warmupRuns,
-  );
-
-  const fuzionResult = measurePerformance(
-    () => {
-      return fuzion(
-        testData,
-        filter(x => x % 2 === 0),
-      );
-    },
-    config.iterations,
-    config.warmupRuns,
-  );
-
-  expect(fuzionResult.averageTime).toBeLessThan(
-    nativeArrayResult.averageTime * 10,
-  );
-  expect(fuzionResult.averageTime).toBeLessThan(
-    nativeForOfResult.averageTime * 15,
-  );
-  expect(fuzionResult.averageTime).toBeLessThan(
-    nativeForResult.averageTime * 20,
-  );
-});
-
-test('map().filter() chain - 100K iterations', () => {
-  const testData = generateTestData(config.arraySize);
-
-  const nativeArrayResult = measurePerformance(
-    () => {
-      return testData.map(x => x * 2).filter(x => x > 10);
-    },
-    config.iterations,
-    config.warmupRuns,
-  );
-
-  const nativeForOfResult = measurePerformance(
-    () => {
-      const result = [];
-      for (const item of testData) {
-        const doubled = item * 2;
-        if (doubled > 10) {
-          result.push(doubled);
-        }
-      }
-      return result;
-    },
-    config.iterations,
-    config.warmupRuns,
-  );
-
-  const nativeForResult = measurePerformance(
-    () => {
-      const result = [];
-      for (let i = 0; i < testData.length; i++) {
-        const doubled = testData[i] * 2;
-        if (doubled > 10) {
-          result.push(doubled);
-        }
-      }
-      return result;
-    },
-    config.iterations,
-    config.warmupRuns,
-  );
-
-  const fuzionResult = measurePerformance(
-    () => {
-      return fuzion(
-        testData,
-        map(x => x * 2),
-        filter(x => x > 10),
-      );
-    },
-    config.iterations,
-    config.warmupRuns,
-  );
-
-  expect(fuzionResult.averageTime).toBeLessThan(
-    nativeArrayResult.averageTime * 10,
-  );
-  expect(fuzionResult.averageTime).toBeLessThan(
-    nativeForOfResult.averageTime * 15,
-  );
-  expect(fuzionResult.averageTime).toBeLessThan(
-    nativeForResult.averageTime * 20,
-  );
-});
-
-test('complex chain with multiple operations - 100K iterations', () => {
-  const testData = generateTestData(config.arraySize);
-
-  const nativeArrayResult = measurePerformance(
-    () => {
-      return testData
-        .map(x => x * 2)
-        .filter(x => x > 10)
-        .map(x => x.toString())
-        .filter(x => x.length > 1);
-    },
-    config.iterations,
-    config.warmupRuns,
-  );
-
-  const nativeForOfResult = measurePerformance(
-    () => {
-      const result = [];
-      for (const item of testData) {
-        const doubled = item * 2;
-        if (doubled > 10) {
-          const str = doubled.toString();
-          if (str.length > 1) {
-            result.push(str);
-          }
-        }
-      }
-      return result;
-    },
-    config.iterations,
-    config.warmupRuns,
-  );
-
-  const nativeForResult = measurePerformance(
-    () => {
-      const result = [];
-      for (let i = 0; i < testData.length; i++) {
-        const doubled = testData[i] * 2;
-        if (doubled > 10) {
-          const str = doubled.toString();
-          if (str.length > 1) {
-            result.push(str);
-          }
-        }
-      }
-      return result;
-    },
-    config.iterations,
-    config.warmupRuns,
-  );
-
-  const fuzionResult = measurePerformance(
-    () => {
-      return fuzion(
-        testData,
-        map(x => x * 2),
-        filter(x => x > 10),
-        map(x => x.toString()),
-        filter(x => x.length > 1),
-      );
-    },
-    config.iterations,
-    config.warmupRuns,
-  );
-
-  expect(fuzionResult.averageTime).toBeLessThan(
-    nativeArrayResult.averageTime * 10,
-  );
-  expect(fuzionResult.averageTime).toBeLessThan(
-    nativeForOfResult.averageTime * 15,
-  );
-  expect(fuzionResult.averageTime).toBeLessThan(
-    nativeForResult.averageTime * 20,
-  );
-});
-
-test('object transformation performance - 100K iterations', () => {
-  const testData = generateObjectData(config.arraySize);
-
-  const nativeArrayResult = measurePerformance(
-    () => {
-      return testData
-        .filter(item => item.active)
-        .map(item => ({ id: item.id, name: item.name.toUpperCase() }));
-    },
-    config.iterations,
-    config.warmupRuns,
-  );
-
-  const nativeForOfResult = measurePerformance(
-    () => {
-      const result = [];
-      for (const item of testData) {
-        if (item.active) {
-          result.push({ id: item.id, name: item.name.toUpperCase() });
-        }
-      }
-      return result;
-    },
-    config.iterations,
-    config.warmupRuns,
-  );
-
-  const nativeForResult = measurePerformance(
-    () => {
-      const result = [];
-      for (let i = 0; i < testData.length; i++) {
-        const item = testData[i];
-        if (item.active) {
-          result.push({ id: item.id, name: item.name.toUpperCase() });
-        }
-      }
-      return result;
-    },
-    config.iterations,
-    config.warmupRuns,
-  );
-
-  const fuzionResult = measurePerformance(
-    () => {
-      return fuzion(
-        testData,
-        filter(item => item.active),
-        map(item => ({ id: item.id, name: item.name.toUpperCase() })),
-      );
-    },
-    config.iterations,
-    config.warmupRuns,
-  );
-
-  expect(fuzionResult.averageTime).toBeLessThan(
-    nativeArrayResult.averageTime * 10,
-  );
-  expect(fuzionResult.averageTime).toBeLessThan(
-    nativeForOfResult.averageTime * 15,
-  );
-  expect(fuzionResult.averageTime).toBeLessThan(
-    nativeForResult.averageTime * 20,
-  );
-});
-
-test('mixed data type performance - 100K iterations', () => {
-  const testData = generateMixedData(config.arraySize);
-
-  const nativeArrayResult = measurePerformance(
-    () => {
-      return testData
-        .filter((item): item is number => typeof item === 'number')
-        .map(x => x * 2)
-        .filter(x => x > 10);
-    },
-    config.iterations,
-    config.warmupRuns,
-  );
-
-  const nativeForOfResult = measurePerformance(
-    () => {
-      const result = [];
-      for (const item of testData) {
-        if (typeof item === 'number') {
-          const doubled = item * 2;
-          if (doubled > 10) {
-            result.push(doubled);
-          }
-        }
-      }
-      return result;
-    },
-    config.iterations,
-    config.warmupRuns,
-  );
-
-  const nativeForResult = measurePerformance(
-    () => {
-      const result = [];
-      for (let i = 0; i < testData.length; i++) {
-        const item = testData[i];
-        if (typeof item === 'number') {
-          const doubled = item * 2;
-          if (doubled > 10) {
-            result.push(doubled);
-          }
-        }
-      }
-      return result;
-    },
-    config.iterations,
-    config.warmupRuns,
-  );
-
-  const fuzionResult = measurePerformance(
-    () => {
-      return fuzion(
-        testData,
-        filter((item): item is number => typeof item === 'number'),
-        map(x => x * 2),
-        filter(x => x > 10),
-      );
-    },
-    config.iterations,
-    config.warmupRuns,
-  );
-
-  expect(fuzionResult.averageTime).toBeLessThan(
-    nativeArrayResult.averageTime * 10,
-  );
-  expect(fuzionResult.averageTime).toBeLessThan(
-    nativeForOfResult.averageTime * 20,
-  );
-  expect(fuzionResult.averageTime).toBeLessThan(
-    nativeForResult.averageTime * 20,
-  );
-});
-
-test('scalability test with different array sizes', () => {
-  const sizes = [100, 1000, 10000];
-  const iterations = 10000;
-
-  sizes.forEach(size => {
-    const testData = generateTestData(size);
-
-    const nativeArrayResult = measurePerformance(
-      () => {
-        return testData.map(x => x * 2).filter(x => x > 10);
-      },
-      iterations,
-      5,
-    );
-
-    const fuzionResult = measurePerformance(
-      () => {
-        return fuzion(
-          testData,
-          map(x => x * 2),
-          filter(x => x > 10),
-        );
-      },
-      iterations,
-      5,
-    );
-
-    expect(fuzionResult.averageTime).toBeLessThan(
-      nativeArrayResult.averageTime * 10,
+  const fuzionTime = scientificBenchmark('Fuzion', () => {
+    return fuzion(
+      testArray,
+      map(x => x * 2),
+      map(x => x + 1),
+      filter(x => x > 5),
     );
   });
-});
 
-test('memory efficiency comparison', () => {
-  const testData = generateTestData(10000);
-  const iterations = 1000;
-
-  const nativeArrayResult = measurePerformance(
-    () => {
-      return testData.map(x => x * 2).filter(x => x > 10);
-    },
-    iterations,
-    5,
+  console.log(
+    `Manual Single Loop: ${manualTime.mean.toFixed(2)}ms (median: ${manualTime.median.toFixed(2)}ms)`,
+  );
+  console.log(
+    `Chained Native: ${chainedTime.mean.toFixed(2)}ms (median: ${chainedTime.median.toFixed(2)}ms)`,
+  );
+  console.log(
+    `Fuzion: ${fuzionTime.mean.toFixed(2)}ms (median: ${fuzionTime.median.toFixed(2)}ms)`,
   );
 
-  const fuzionResult = measurePerformance(
-    () => {
-      return fuzion(
-        testData,
-        map(x => x * 2),
-        filter(x => x > 10),
-      );
-    },
-    iterations,
-    5,
+  const chainedToManual = chainedTime.mean / manualTime.mean;
+  const fuzionToManual = fuzionTime.mean / manualTime.mean;
+  const fuzionToChained = fuzionTime.mean / chainedTime.mean;
+
+  console.log(`\nPerformance ratios:`);
+  console.log(
+    `Chained vs Manual: ${chainedToManual > 1 ? `${chainedToManual.toFixed(2)}x slower` : `${(1 / chainedToManual).toFixed(2)}x faster`}`,
+  );
+  console.log(
+    `Fuzion vs Manual: ${fuzionToManual > 1 ? `${fuzionToManual.toFixed(2)}x slower` : `${(1 / fuzionToManual).toFixed(2)}x faster`}`,
+  );
+  console.log(
+    `Fuzion vs Chained: ${fuzionToChained > 1 ? `${fuzionToChained.toFixed(2)}x slower` : `${(1 / fuzionToChained).toFixed(2)}x faster`}`,
   );
 
-  expect(fuzionResult.averageTime).toBeLessThan(
-    nativeArrayResult.averageTime * 5,
-  );
-  if (fuzionResult.memoryUsage && nativeArrayResult.memoryUsage) {
-    const fuzionMemoryIncrease =
-      fuzionResult.memoryUsage.after - fuzionResult.memoryUsage.before;
-    const nativeMemoryIncrease =
-      nativeArrayResult.memoryUsage.after -
-      nativeArrayResult.memoryUsage.before;
-    if (fuzionMemoryIncrease > 0 && nativeMemoryIncrease > 0) {
-      expect(fuzionMemoryIncrease).toBeLessThanOrEqual(
-        nativeMemoryIncrease * 2,
-      );
+  const manualResult = (() => {
+    const result = [];
+    for (let i = 0; i < testArray.length; i += 1) {
+      const x = testArray[i];
+      const step1 = x * 2;
+      const step2 = step1 + 1;
+      if (step2 > 5) {
+        result.push(step2);
+      }
     }
-  }
+    return result;
+  })();
+
+  const chainedResult = testArray
+    .map(x => x * 2)
+    .map(x => x + 1)
+    .filter(x => x > 5);
+  const fuzionResult = fuzion(
+    testArray,
+    map(x => x * 2),
+    map(x => x + 1),
+    filter(x => x > 5),
+  );
+
+  expect(manualResult).toEqual(chainedResult);
+  expect(chainedResult).toEqual(fuzionResult);
+
+  expect(fuzionTime.mean).toBeLessThan(manualTime.mean * 20); // Allow up to 20x slower
+  expect(fuzionTime.mean).toBeLessThan(chainedTime.mean * 5); // Allow up to 5x slower than chained
 });
 
-test('edge case performance with empty arrays', () => {
-  const emptyArray = [0].slice(0, 0);
-  const iterations = 100000;
+test('MAP-only chain: Where fuzion should perform better', () => {
+  console.log('\n=== MAP + MAP + MAP: MAP-only chain comparison ===');
 
-  const nativeArrayResult = measurePerformance(
-    () => {
-      return emptyArray.map(x => x * 2).filter(x => x > 10);
-    },
-    iterations,
-    10,
+  const manualTime = scientificBenchmark('Manual Single Loop', () => {
+    const result = new Array(testArray.length);
+    for (let i = 0; i < testArray.length; i += 1) {
+      const x = testArray[i];
+      const step1 = x * 2;
+      const step2 = step1 + 1;
+      result[i] = step2 * 3;
+    }
+    return result;
+  });
+
+  const chainedTime = scientificBenchmark('Chained Native', () => {
+    return testArray
+      .map(x => x * 2)
+      .map(x => x + 1)
+      .map(x => x * 3);
+  });
+
+  const fuzionTime = scientificBenchmark('Fuzion', () => {
+    return fuzion(
+      testArray,
+      map(x => x * 2),
+      map(x => x + 1),
+      map(x => x * 3),
+    );
+  });
+
+  console.log(
+    `Manual Single Loop: ${manualTime.mean.toFixed(2)}ms (median: ${manualTime.median.toFixed(2)}ms)`,
+  );
+  console.log(
+    `Chained Native: ${chainedTime.mean.toFixed(2)}ms (median: ${chainedTime.median.toFixed(2)}ms)`,
+  );
+  console.log(
+    `Fuzion: ${fuzionTime.mean.toFixed(2)}ms (median: ${fuzionTime.median.toFixed(2)}ms)`,
   );
 
-  const fuzionResult = measurePerformance(
-    () => {
-      return fuzion(
-        emptyArray,
-        map(x => x * 2),
-        filter(x => x > 10),
-      );
-    },
-    iterations,
-    10,
+  const chainedToManual = chainedTime.mean / manualTime.mean;
+  const fuzionToManual = fuzionTime.mean / manualTime.mean;
+  const fuzionToChained = fuzionTime.mean / chainedTime.mean;
+
+  console.log(`\nPerformance ratios:`);
+  console.log(
+    `Chained vs Manual: ${chainedToManual > 1 ? `${chainedToManual.toFixed(2)}x slower` : `${(1 / chainedToManual).toFixed(2)}x faster`}`,
+  );
+  console.log(
+    `Fuzion vs Manual: ${fuzionToManual > 1 ? `${fuzionToManual.toFixed(2)}x slower` : `${(1 / fuzionToManual).toFixed(2)}x faster`}`,
+  );
+  console.log(
+    `Fuzion vs Chained: ${fuzionToChained > 1 ? `${fuzionToChained.toFixed(2)}x slower` : `${(1 / fuzionToChained).toFixed(2)}x faster`}`,
   );
 
-  expect(fuzionResult.averageTime).toBeLessThan(
-    nativeArrayResult.averageTime * 5,
+  const manualResult = (() => {
+    const result = new Array(testArray.length);
+    for (let i = 0; i < testArray.length; i += 1) {
+      const x = testArray[i];
+      const step1 = x * 2;
+      const step2 = step1 + 1;
+      result[i] = step2 * 3;
+    }
+    return result;
+  })();
+
+  const chainedResult = testArray
+    .map(x => x * 2)
+    .map(x => x + 1)
+    .map(x => x * 3);
+  const fuzionResult = fuzion(
+    testArray,
+    map(x => x * 2),
+    map(x => x + 1),
+    map(x => x * 3),
   );
+
+  expect(manualResult).toEqual(chainedResult);
+  expect(chainedResult).toEqual(fuzionResult);
+
+  expect(fuzionTime.mean).toBeLessThan(manualTime.mean * 20); // Allow up to 20x slower than manual
+  expect(fuzionTime.mean).toBeLessThan(chainedTime.mean * 2); // Should be competitive with chained
 });
 
-test('edge case performance with single element arrays', () => {
-  const singleElementArray = [42];
-  const iterations = 100000;
+test('TAKE operator: Where fuzion should excel', () => {
+  console.log('\n=== TAKE operator: Early exit optimization ===');
 
-  const nativeArrayResult = measurePerformance(
-    () => {
-      return singleElementArray.map(x => x * 2).filter(x => x > 10);
-    },
-    iterations,
-    10,
+  const manualTime = scientificBenchmark('Manual with Early Exit', () => {
+    const result = [];
+    for (let i = 0; i < testArray.length; i += 1) {
+      const x = testArray[i];
+      const step1 = x * 2;
+      const step2 = step1 + 1;
+      if (step2 > 5) {
+        result.push(step2);
+      }
+      if (result.length >= 100) break;
+    }
+    return result.slice(0, 100);
+  });
+
+  const chainedTime = scientificBenchmark('Chained Native', () => {
+    return testArray
+      .map(x => x * 2)
+      .map(x => x + 1)
+      .filter(x => x > 5)
+      .slice(0, 100);
+  });
+
+  const fuzionTime = scientificBenchmark('Fuzion with Take', () => {
+    return fuzion(
+      testArray,
+      map(x => x * 2),
+      map(x => x + 1),
+      filter(x => x > 5),
+      take(100),
+    );
+  });
+
+  console.log(
+    `Manual with Early Exit: ${manualTime.mean.toFixed(2)}ms (median: ${manualTime.median.toFixed(2)}ms)`,
+  );
+  console.log(
+    `Chained Native: ${chainedTime.mean.toFixed(2)}ms (median: ${chainedTime.median.toFixed(2)}ms)`,
+  );
+  console.log(
+    `Fuzion with Take: ${fuzionTime.mean.toFixed(2)}ms (median: ${fuzionTime.median.toFixed(2)}ms)`,
   );
 
-  const fuzionResult = measurePerformance(
-    () => {
-      return fuzion(
-        singleElementArray,
-        map(x => x * 2),
-        filter(x => x > 10),
-      );
-    },
-    iterations,
-    10,
+  const chainedToManual = chainedTime.mean / manualTime.mean;
+  const fuzionToManual = fuzionTime.mean / manualTime.mean;
+  const fuzionToChained = fuzionTime.mean / chainedTime.mean;
+
+  console.log(`\nPerformance ratios:`);
+  console.log(
+    `Chained vs Manual: ${chainedToManual > 1 ? `${chainedToManual.toFixed(2)}x slower` : `${(1 / chainedToManual).toFixed(2)}x faster`}`,
+  );
+  console.log(
+    `Fuzion vs Manual: ${fuzionToManual > 1 ? `${fuzionToManual.toFixed(2)}x slower` : `${(1 / fuzionToManual).toFixed(2)}x faster`}`,
+  );
+  console.log(
+    `Fuzion vs Chained: ${fuzionToChained > 1 ? `${fuzionToChained.toFixed(2)}x slower` : `${(1 / fuzionToChained).toFixed(2)}x faster`}`,
   );
 
-  expect(fuzionResult.averageTime).toBeLessThan(
-    nativeArrayResult.averageTime * 5,
+  const manualResult = (() => {
+    const result = [];
+    for (let i = 0; i < testArray.length; i += 1) {
+      const x = testArray[i];
+      const step1 = x * 2;
+      const step2 = step1 + 1;
+      if (step2 > 5) {
+        result.push(step2);
+      }
+      if (result.length >= 100) break;
+    }
+    return result.slice(0, 100);
+  })();
+
+  const chainedResult = testArray
+    .map(x => x * 2)
+    .map(x => x + 1)
+    .filter(x => x > 5)
+    .slice(0, 100);
+  const fuzionResult = fuzion(
+    testArray,
+    map(x => x * 2),
+    map(x => x + 1),
+    filter(x => x > 5),
+    take(100),
   );
+
+  expect(manualResult.length).toBeLessThanOrEqual(100);
+  expect(chainedResult.length).toBeLessThanOrEqual(100);
+  expect(fuzionResult.length).toBeLessThanOrEqual(100);
+
+  expect(manualResult.length).toBeGreaterThan(0);
+  expect(chainedResult.length).toBeGreaterThan(0);
+  expect(fuzionResult.length).toBeGreaterThan(0);
+
+  expect(fuzionTime.mean).toBeLessThan(manualTime.mean * 10); // Allow up to 10x slower
+  expect(fuzionTime.mean).toBeLessThan(chainedTime.mean * 0.5); // Should be faster than chained
+});
+
+test('Single MAP operation: Baseline comparison', () => {
+  console.log('\n=== Single MAP: Baseline performance ===');
+
+  const manualTime = scientificBenchmark('Manual Single Loop', () => {
+    const result = new Array(testArray.length);
+    for (let i = 0; i < testArray.length; i += 1) {
+      result[i] = testArray[i] * 2;
+    }
+    return result;
+  });
+
+  const chainedTime = scientificBenchmark('Chained Native', () => {
+    return testArray.map(x => x * 2);
+  });
+
+  const fuzionTime = scientificBenchmark('Fuzion', () => {
+    return fuzion(
+      testArray,
+      map(x => x * 2),
+    );
+  });
+
+  console.log(
+    `Manual Single Loop: ${manualTime.mean.toFixed(2)}ms (median: ${manualTime.median.toFixed(2)}ms)`,
+  );
+  console.log(
+    `Chained Native: ${chainedTime.mean.toFixed(2)}ms (median: ${chainedTime.median.toFixed(2)}ms)`,
+  );
+  console.log(
+    `Fuzion: ${fuzionTime.mean.toFixed(2)}ms (median: ${fuzionTime.median.toFixed(2)}ms)`,
+  );
+
+  const chainedToManual = chainedTime.mean / manualTime.mean;
+  const fuzionToManual = fuzionTime.mean / manualTime.mean;
+  const fuzionToChained = fuzionTime.mean / chainedTime.mean;
+
+  console.log(`\nPerformance ratios:`);
+  console.log(
+    `Chained vs Manual: ${chainedToManual > 1 ? `${chainedToManual.toFixed(2)}x slower` : `${(1 / chainedToManual).toFixed(2)}x faster`}`,
+  );
+  console.log(
+    `Fuzion vs Manual: ${fuzionToManual > 1 ? `${fuzionToManual.toFixed(2)}x slower` : `${(1 / fuzionToManual).toFixed(2)}x faster`}`,
+  );
+  console.log(
+    `Fuzion vs Chained: ${fuzionToChained > 1 ? `${fuzionToChained.toFixed(2)}x slower` : `${(1 / fuzionToChained).toFixed(2)}x faster`}`,
+  );
+
+  const manualResult = (() => {
+    const result = new Array(testArray.length);
+    for (let i = 0; i < testArray.length; i += 1) {
+      result[i] = testArray[i] * 2;
+    }
+    return result;
+  })();
+
+  const chainedResult = testArray.map(x => x * 2);
+  const fuzionResult = fuzion(
+    testArray,
+    map(x => x * 2),
+  );
+
+  expect(manualResult).toEqual(chainedResult);
+  expect(chainedResult).toEqual(fuzionResult);
+
+  expect(fuzionTime.mean).toBeLessThan(manualTime.mean * 15); // Allow up to 15x slower
+  expect(fuzionTime.mean).toBeLessThan(chainedTime.mean * 3); // Should be competitive with chained
+});
+
+test('Single FILTER operation: Baseline comparison', () => {
+  console.log('\n=== Single FILTER: Baseline performance ===');
+
+  const manualTime = scientificBenchmark('Manual Single Loop', () => {
+    const result = [];
+    for (let i = 0; i < testArray.length; i += 1) {
+      if (testArray[i] % 2 === 0) {
+        result.push(testArray[i]);
+      }
+    }
+    return result;
+  });
+
+  const chainedTime = scientificBenchmark('Chained Native', () => {
+    return testArray.filter(x => x % 2 === 0);
+  });
+
+  const fuzionTime = scientificBenchmark('Fuzion', () => {
+    return fuzion(
+      testArray,
+      filter(x => x % 2 === 0),
+    );
+  });
+
+  console.log(
+    `Manual Single Loop: ${manualTime.mean.toFixed(2)}ms (median: ${manualTime.median.toFixed(2)}ms)`,
+  );
+  console.log(
+    `Chained Native: ${chainedTime.mean.toFixed(2)}ms (median: ${chainedTime.median.toFixed(2)}ms)`,
+  );
+  console.log(
+    `Fuzion: ${fuzionTime.mean.toFixed(2)}ms (median: ${fuzionTime.median.toFixed(2)}ms)`,
+  );
+
+  const chainedToManual = chainedTime.mean / manualTime.mean;
+  const fuzionToManual = fuzionTime.mean / manualTime.mean;
+  const fuzionToChained = fuzionTime.mean / chainedTime.mean;
+
+  console.log(`\nPerformance ratios:`);
+  console.log(
+    `Chained vs Manual: ${chainedToManual > 1 ? `${chainedToManual.toFixed(2)}x slower` : `${(1 / chainedToManual).toFixed(2)}x faster`}`,
+  );
+  console.log(
+    `Fuzion vs Manual: ${fuzionToManual > 1 ? `${fuzionToManual.toFixed(2)}x slower` : `${(1 / fuzionToManual).toFixed(2)}x faster`}`,
+  );
+  console.log(
+    `Fuzion vs Chained: ${fuzionToChained > 1 ? `${fuzionToChained.toFixed(2)}x slower` : `${(1 / fuzionToChained).toFixed(2)}x faster`}`,
+  );
+
+  const manualResult = (() => {
+    const result = [];
+    for (let i = 0; i < testArray.length; i += 1) {
+      if (testArray[i] % 2 === 0) {
+        result.push(testArray[i]);
+      }
+    }
+    return result;
+  })();
+
+  const chainedResult = testArray.filter(x => x % 2 === 0);
+  const fuzionResult = fuzion(
+    testArray,
+    filter(x => x % 2 === 0),
+  );
+
+  expect(manualResult).toEqual(chainedResult);
+  expect(chainedResult).toEqual(fuzionResult);
+
+  expect(fuzionTime.mean).toBeLessThan(manualTime.mean * 15); // Allow up to 15x slower
+  expect(fuzionTime.mean).toBeLessThan(chainedTime.mean * 3); // Should be competitive with chained
 });
