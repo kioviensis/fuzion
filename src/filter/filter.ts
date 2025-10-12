@@ -22,7 +22,7 @@ export function filter<T>(
       if (predicate(value, index)) {
         return value;
       } else {
-        return NEGATIVE_SYMBOL as T;
+        return NEGATIVE_SYMBOL as unknown as T;
       }
     },
   };
