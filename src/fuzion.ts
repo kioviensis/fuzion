@@ -132,19 +132,20 @@ export function fuzion<TInput>(
     return [];
   }
 
-  length = Math.min(length, takeCount);
+  let outputCount = 0;
 
   const hasFilters = processedOperators.some(op => op.kind === Kind.FILTER);
 
   if (!hasFilters) {
     // MAP-only chain: use pre-allocated array
-    const output = new Array(length);
-    for (let index = 0; index < length; index += 1) {
+      const outputSize = Math.min(length, takeCount)
+    const output = new Array(outputSize);
+    for (let index = 0; index < outputSize; index += 1) {
       let currentValue = input[index];
       for (let i = 0; i < processedOperators.length; i += 1) {
         currentValue = processedOperators[i].run(currentValue, index);
       }
-      output[index] = currentValue;
+    output[index] = currentValue;
     }
     return output;
   }
@@ -171,6 +172,8 @@ export function fuzion<TInput>(
 
     if (!shouldSkip) {
       output.push(currentValue);
+      outputCount += 1;
+      if (outputCount >= takeCount) break;
     }
   }
 
